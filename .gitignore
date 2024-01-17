@@ -2,7 +2,8 @@ outputs
 geltip_dataset/dataset
 MUJOCO_LOG.TXT
 scene.xml
-data/wear
+data/**/*
+world/components/ur5e/ikfastpy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
