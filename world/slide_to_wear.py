@@ -1,21 +1,20 @@
 import time
 from random import sample, randint, choice
 
-import yaml
-from yarok.comm.components.cam.cam import Cam
-
 from world.components.gelsight.gelsight2014 import GelSight2014
 from world.shared.colors import colors_names, color_map
 from world.shared.cross_spawn import run_parallel, run_sequential, run_all
 from world.shared.memory import Memory
 from world.shared.robotbody import RobotBody
+
+from yarok.comm.worlds.empty_world import EmptyWorld
+from yarok import Platform, PlatformMJC, PlatformHW, Injector, component, ConfigBlock
+
 from .components.geltip.geltip import GelTip
 from .components.tumble_tower.tumble_tower import TumbleTower
-
-from yarok import Platform, Injector, component, ConfigBlock
-from yarok.comm.worlds.empty_world import EmptyWorld
-from yarok.comm.components.ur5e.ur5e import UR5e
-from yarok.comm.components.robotiq_2f85.robotiq_2f85 import Robotiq2f85
+from .components.ur5e.ur5e import UR5e
+from .components.robotiq_2f85.robotiq_2f85 import Robotiq2f85
+from .components.cam.cam import Cam
 
 from math import pi
 
@@ -223,12 +222,36 @@ def launch_world(**kwargs):
         'world': BlocksTowerTestWorld,
         'behaviour': SlideToWear,
         'defaults': {
+            'environment': 'sim',  # update this to sim for running in sim environment.
             'behaviour': kwargs,
             'components': {
                 '/': kwargs
             }
         },
+        'environments': {
+            'sim': {
+                'platform': {
+                    'class': PlatformMJC
+                },
+            },
+            'real': {
+                'platform': {
+                    'class': PlatformHW,
+                    'interfaces': {
+                        '/left_geltip': {
+                            'cam_id': 0
+                        },
+                        '/right_geltip': {
+                            'cam_id': "/dev/video2"
+                        },
+                        '/cam': {
+                            'cam_id': 5
+                        }
+                    }
+                },
 
+            }
+        }
     }).run()
 
 

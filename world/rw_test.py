@@ -3,9 +3,8 @@ from random import sample, randint, choice
 
 import yaml
 
-from worlds.shared.cross_spawn import run_parallel, run_sequential, run_all
-from worlds.shared.memory import Memory
-from worlds.shared.robotbody import RobotBody
+from world.shared.memory import Memory
+from world.shared.robotbody import RobotBody
 from .components.geltip.geltip import GelTip
 from .components.tumble_tower.tumble_tower import TumbleTower
 from .components.ur5e.ur5e import UR5e
@@ -168,7 +167,9 @@ def z(pos, delta):
     new_pos[2] += delta
     return new_pos
 
+
 import cv2
+
 
 class PickAndPlaceBehaviour:
 
@@ -186,8 +187,7 @@ class PickAndPlaceBehaviour:
         self.pl: Platform = injector.get(Platform)
         self.config = config
 
-        self.memory = Memory(self.body, self.config, skip_right_sensor=False)
-
+        # self.memory = Memory(self.body, self.config, skip_right_sensor=False)
 
         self.DOWN = [3.11, 1.6e-7, 3.11]
         self.BLOCK_SIZE = 0.06
@@ -205,7 +205,7 @@ class PickAndPlaceBehaviour:
 
     def wait(self, arm=None, gripper=None):
         def cb():
-            self.memory.save()
+            # self.memory.save()
 
             self.pl.wait_seconds(0.5)
 
@@ -229,19 +229,26 @@ class PickAndPlaceBehaviour:
             self.body.gripper.close(q)
             self.wait(gripper=q)
 
+        # test gripper
+        # # move gripper, close?
+        # move_gripper(1.0)
+        # # move gripper open?
+        # move_gripper(0.0)
+
+
+        # test arm
         # set the arm in the initial position
         print('MOVED ORIGIN', [0, 0, 0, 0, 0, 0])
         self.pl.wait(self.body.arm.move_q([0, 0, 0, 0, 0, 0]))
+
         print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED ORIGIN')
         self.pl.wait_seconds(10)
         self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN))
 
-
         # cv2.imwrite(f'bkg.jpg', self.memory.prepare_frame(self.body.cam.read()))
         # exit(-1)
 
-        self.memory.prepare()
-
+        # self.memory.prepare()
 
         # do the pick and place.
         for i in range(len(self.pick_blocks)):
@@ -297,10 +304,8 @@ def launch_world(**kwargs):
                         }
                     }
                 },
-                
             }
         }
-        
 
     }).run()
 
