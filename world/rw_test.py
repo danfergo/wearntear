@@ -253,7 +253,7 @@ class PickAndPlaceBehaviour:
         for i in range(4):
             # before grasping.
             # move_gripper(0.26)
-            # p1
+            # p1W
             p1 = [-0.44401382678115653, -0.44730236014909425, 0.0406047505555867]
             move_arm(p1)
             print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED P1')
