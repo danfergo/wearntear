@@ -115,9 +115,9 @@ from math import pi
                 <body euler="0 0 3.14" pos="0 -0.2 0.3">
                     <ur5e name='arm'>
                        <robotiq-2f85 name="gripper" left_tip="{False}" right_tip="{False}" parent="ee_link"> 
-                          <body pos="0.02 -0.017 0.01" xyaxes="0 -1 0 1 0 0" parent="right_tip">
+                          <body pos="0.02 -0.017 0.01" xyaxes="1 0 0 0 -1 0" parent="right_tip">
                                 <gelsight2014 name="left_geltip" label_color="255 0 0"/>
-                            </body>
+                           </body>
                            <body pos="-0.02 -0.017 0.01" xyaxes="0 1 0 -1 0 0" parent="left_tip">
                                 <gelsight2014 name="right_geltip" label_color="0 255 0"/>
                             </body>
@@ -178,6 +178,8 @@ class SlideToWear:
         self.pl.wait(cb)
 
     def on_start(self):
+        return True
+
         def move_arm(p):
             q = self.body.arm.ik(xyz=p, xyz_angles=self.DOWN_DIRECTION)
             if q is None:
@@ -215,6 +217,9 @@ class SlideToWear:
             # # moves back
             move_arm(self.END_POS_UP)
             # move_arm(self.START_POS_UP)
+
+    def on_update(self):
+        return True
 
 
 def launch_world(**kwargs):

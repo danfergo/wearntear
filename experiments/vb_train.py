@@ -3,16 +3,10 @@ import os
 from dfgiatk.experimenter import run, e, Logger, Validator, Plotter, ModelSaver
 from torch import optim
 
-from experiments.nn.associative_cat_ae import AssociativeCatAE
-from experiments.nn.auto_encoder import SensoryAE
-from experiments.nn.temporal_conv2d_pm import TemporalConv2dAE
-
-from experiments.nn.vtacpm import VTACPredictiveModel
-
 from dfgiatk.experimenter.event_listeners.training_samples import TrainingSamples
 from dfgiatk.train import fit_to_dataset
 from experiments.losses.perceptual_loss import VGGPerceptualLoss
-from experiments.shared.vitacworld_loaders import loader
+from experiments.shared.loaders import loader
 
 from piqa import SSIM, PSNR, LPIPS
 
@@ -26,24 +20,23 @@ config = {
         'lr': 0.01,
 
         # data
-        'datasets': ['block3'],
+        'datasets': [
+            # 'sim_wear',
+            # 'sim_tear',
+            # 'real_wear',
+            # 'real_tear'
+        ],
         'data_path': '/home/danfergo/data/',
-        'img_size': (128, 128),
-        'stack': str(4),
-        '{inputs}': lambda: [f'c:0-{e.stack}', f'l:0-{e.stack}', f'a:{e.stack}'],  # 0-{e.stack}
-        '{outputs}': lambda: [f'c:{e.stack}', f'l:{e.stack}'],
+        'img_size': (224, 224),
+        'o_dt': 4,  # 0 or 1
+        '{inputs}': lambda: [f'c:0-{e.o_dt}', f'l:0-{e.o_dt}', f'a:{e.o_dt}'],  # 0-{e.stack}
+        '{outputs}': lambda: [f'c:{e.o_dt}', f'l:{e.o_dt}'],
         '{data_loader}': lambda: loader('train'),
         '{val_loader}': lambda: loader('val'),
         # 'train_ic_transform': transform(),
 
         # network
-        '{model}': lambda: VTACPredictiveModel(
-            vis_ae=SensoryAE(encoder_shape='3d', n_blocks=2),
-            touch_ae=SensoryAE(encoder_shape='3d', n_blocks=2),
-            associative_ae=AssociativeCatAE(),
-            predictive_model=TemporalConv2dAE(channels=128),
-            skip_connection=True
-        ),
+        # '{model}': lambda: ,
 
         # train
         'train_device': 'cuda',
