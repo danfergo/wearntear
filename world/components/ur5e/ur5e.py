@@ -62,21 +62,18 @@ def sae(q1, q2):
 @interface(
     # max-speed https://store.clearpathrobotics.com/products/ur5e
     defaults={
-        'speed': pi / 24
+        'speed': pi / 24,
+        'initial_position': None
     }
 )
 class UR5eInterfaceMJC:
     def __init__(self, interface: InterfaceMJC, config: ConfigBlock):
         self.interface = interface
         self.speed = config['speed']
-        initial_q = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
+        self.q = initial_q = [0, 0, 0, 0, 0, 0]
+
+        self.ur5_kin = ikfastpy.PyKinematics()
+        self.n_joints = self.ur5_kin.getDOF()
 
         self.ws = [
             [- pi, pi],  # shoulder pan
@@ -86,31 +83,23 @@ class UR5eInterfaceMJC:
             [- 2 * pi, 2 * pi],  # wrist 2
             [- 2 * pi, 2 * pi]  # wrist 3
         ]
+
+        # bugfix
+        config._defaults['initial_position'] = ([-0.44, -0.44, 0.3], [0.0, 1.6, 0.0], 2)
+
+        if config['initial_position'] is not None:
+            xyz, xyz_angles, ik_index = config['initial_position']
+            target = self.ik(xyz, xyz_angles, ik_index)
+            [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))]
+            self.q = initial_q = target
+            print('MOVE TO', config['speed'], config['initial_position'])
+
         self.stopped_steps = 0
 
-        self.q = initial_q
         self.start_q = initial_q
         self.target_q = initial_q
         self.start_t = time.time()
         self.delta_t = 0
-
-        self.ur5_kin = ikfastpy.PyKinematics()
-        self.n_joints = self.ur5_kin.getDOF()
-
-        # transformation_matrix = np.array([[0.04071115, -0.99870914, 0.03037599, 0.3020009],
-        #                                   [-0.99874455, -0.04156303, -0.02796067, 0.12648243],
-        #                                   [0.0291871, -0.02919955, -0.99914742, 0.53451169]])
-        # print(self.get_pose_vectors(transformation_matrix))
-
-        # ee_pose = HTrans(np.array([self.q]).T, [0])  # self.ur5_kin.forward(self.q)
-        # ee_pose = np.asarray(ee_pose)
-        # ee_pose = np.asarray(ee_pose).reshape(3, 4)  # 3x4 rigid transformation matrix
-        # print('INITIAL transformation matrix ')
-        # print(ee_pose)
-        # rotation_matrix = ee_pose[0:3, 0:3]
-        # translation_matrix = ee_pose[0:3, 3].T
-        # xyz = R.from_matrix(rotation_matrix).as_euler('xyz')
-        # print('Initial translation', translation_matrix, 'Initial rotation (xyz): ', xyz)
 
     def set_ws(self, ws):
         self.ws = ws
@@ -139,8 +128,7 @@ class UR5eInterfaceMJC:
         rotation_matrix = R.from_euler('xyz', xyz_angles).as_matrix()
         return np.concatenate([rotation_matrix, np.array([xyz]).T], axis=1)
 
-    def compute_ik(self, transformation_matrix):
-
+    def compute_ik(self, transformation_matrix, ik_index=-1):
         joint_configs = self.ur5_kin.inverse(transformation_matrix.reshape(-1).tolist())
         n_solutions = int(len(joint_configs) / self.n_joints)
         joint_configs = np.asarray(joint_configs).reshape(n_solutions, self.n_joints)
@@ -158,17 +146,19 @@ class UR5eInterfaceMJC:
             print('[Error] no solutions within the workspace')
             return None
 
-        closest_config_index = np.argmin([sae(self.q, q) for q in valid_joint_configs])
+        closest_config_index = np.argmin([sae(self.q, q) for q in valid_joint_configs]) if ik_index == -1 else ik_index
+
         q = valid_joint_configs[closest_config_index]
         return q
 
-    def ik(self, xyz=None, xyz_angles=None):
-        c_transformation_matrix = self.get_transformation_matrix(self.q)
-        current_xyz, current_xyz_angles = self.get_pose_vectors(c_transformation_matrix)
-        q_xyz = xyz if xyz is not None else current_xyz
-        q_xyz_angles = xyz_angles if xyz_angles is not None else current_xyz_angles
-        transformation_matrix = self.compute_transformation_matrix(q_xyz, q_xyz_angles)
-        return self.compute_ik(transformation_matrix)
+    def ik(self, xyz=None, xyz_angles=None, ik_index=-1):
+        if xyz is None or xyz_angles is None:
+            c_transformation_matrix = self.get_transformation_matrix(self.q)
+            current_xyz, current_xyz_angles = self.get_pose_vectors(c_transformation_matrix)
+            xyz = xyz if xyz is not None else current_xyz
+            xyz_angles = xyz_angles if xyz_angles is not None else current_xyz_angles
+        transformation_matrix = self.compute_transformation_matrix(xyz, xyz_angles)
+        return self.compute_ik(transformation_matrix, ik_index)
 
     def move_xyz_delta(self, xyz=None, xyz_angles=None):
         c_transformation_matrix = self.get_transformation_matrix(self.q)
@@ -314,15 +304,8 @@ class UR5eInterfaceHW:
         self.robot.set_payload(1.39, (0, 0, 0))
 
         self.speed = 0.3
-        initial_q = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-
+        initial_q = [-2.24741775194277, -2.4600631199278773, -1.1417940855026245, -2.66496004680776, 2.446993589401245,
+                     -1.5501912275897425]
         self.ws = [
             [- pi, pi],  # shoulder pan
             [- pi, 0],  # shoulder lift,
@@ -339,10 +322,13 @@ class UR5eInterfaceHW:
         self.start_t = time.time()
         self.delta_t = 0
 
+        self.probe_interval = 0.1
+        self.next_probe_ts = time.time() + self.probe_interval
+
         self.ur5_kin = ikfastpy.PyKinematics()
         self.n_joints = self.ur5_kin.getDOF()
 
-        self.pids = [PID(P=0.05, I=0.0, D=0.0) for i in range(self.n_joints)]
+        self.pids = [PID(P=0.5, I=0, D=0.01) for i in range(self.n_joints)]
 
     def is_ready(self):
         # required by PlatformHW/interfaceHW,
@@ -439,22 +425,26 @@ class UR5eInterfaceHW:
         else:
             target = self.target_q
 
-        # if self.is_at(self.target_q):
-        # else: 
+        # print('target',target)
+        # print('--'*50)
 
-        # if self.stopped_steps |
         try:
             #     self.robot.speedj()
             [self.pids[i].setTarget(target[i]) for i in range(self.n_joints)]
             [self.pids[i].update(self.q[i]) for i in range(self.n_joints)]
             qv = [self.pids[i].output for i in range(self.n_joints)]
 
-            # qv = np.array(target) - np.array(self.q)
-            # qv = list(qv * 0.03) # / np.linalg.norm(qv) 
-            # print('qv', qv)
-            # print('tar', target)
-            # print(qv)
-            self.robot.speedj(qv, 0.3, 0.5)
+            if time.time() > self.next_probe_ts:
+                self.next_probe_ts = time.time() + self.probe_interval
+                self.robot.speedj(qv, 0.03, 1)
+                # print('-'*100)
+
+            # time.sleep(0.1)
+            # qv = np.abs(qv).sum()
+            # print('qv',qv)
+            # print('-'*100)
+            # self.robot.movej(target)
+
         except RobotException:
             print('robot stopped')
         # [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))]
@@ -471,9 +461,22 @@ class UR5eInterfaceHW:
         transformation_matrix = self.get_transformation_matrix(self.q)
         return self.get_pose_vectors(transformation_matrix)
 
+    # def is_at(self, q):
+    #     err = sae(q, self.q)
+    #     print('err', err)
+    #     return err < 0.006 or (err < 0.025 and self.stopped_steps >= 30)
+
+    def at(self):
+        return self.q
+
+    def at_xyz(self):
+        transformation_matrix = self.get_transformation_matrix(self.q)
+        return self.get_pose_vectors(transformation_matrix)
+
     def is_at(self, q):
         err = sae(q, self.q)
-        print('err', err)
+        print('at:', self.q)
+        # print('err', err)
         return err < 0.006 or (err < 0.025 and self.stopped_steps >= 30)
 
 

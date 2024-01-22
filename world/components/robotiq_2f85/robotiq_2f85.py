@@ -6,12 +6,13 @@ from math import pi
 
 from .robotiq_gripper import RobotiqGripper
 
+
 @interface()
 class Robotiq2f85InterfaceHW:
 
     def __init__(self):
         self.gripper = RobotiqGripper()
-        self.gripper.connect("10.40.101.100", 63352)
+        self.gripper.connect("10.40.101.100", 63352, socket_timeout=10)
 
         # if not gripper.is_active():
         # print('gripper not active, activating ...')
@@ -19,11 +20,11 @@ class Robotiq2f85InterfaceHW:
         # print('gripper is active now.')
         # else:
         self.min_p = self.gripper._min_position
-        self.max_p = self.gripper._max_position 
-    
+        self.max_p = self.gripper._max_position
+
     def _percentage2range(self, p):
         return round(p * (self.max_p - self.min_p) + self.min_p)
-    
+
     def is_ready(self):
         # required by PlatformHW/interfaceHW,
         # should return true when the component is initialized.
@@ -48,7 +49,7 @@ class Robotiq2f85InterfaceHW:
     def step(self):
         pass
 
-        
+
 @interface()
 class Robotiq2f85MJCInterfaceMJC:
 
