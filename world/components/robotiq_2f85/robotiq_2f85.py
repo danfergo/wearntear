@@ -11,7 +11,7 @@ class Robotiq2f85InterfaceHW:
 
     def __init__(self):
         self.gripper = RobotiqGripper()
-        self.gripper.connect("10.40.101.100", 63352)
+        self.gripper.connect("10.40.101.100", 63352,socket_timeout=10)
 
         # if not gripper.is_active():
         # print('gripper not active, activating ...')

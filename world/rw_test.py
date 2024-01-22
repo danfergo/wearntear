@@ -70,9 +70,11 @@ def color_map(c, s=0.8):
                 <material name="gray_wood" texture="wood_texture" rgba="0.6 0.4 0.2 1" specular="0.1"/>
                 <material name="white_wood" texture="wood_texture" rgba="0.6 0.6 0.6 1" specular="0.1"/>
                 
+                <![CDATA[
                 <mesh name="female_threads" file="assets/female_threads.stl" scale="0.001 0.001 0.001"/>
                 <mesh name="threaded_flask" file="assets/threaded_flask.stl" scale="0.001 0.001 0.001"/>
                 <material name="glass_material" rgba="1 1 1 0.3" specular="1.0"/>
+                ]]>
 
             </asset>
             <default>
@@ -120,6 +122,7 @@ def color_map(c, s=0.8):
                     <geom type="box" pos="0 0 0" size="0.4 0.4 0.1" material="white_wood"/>
                </body>  
                
+               <![CDATA[
                <body pos="0.3 0.11 0" name="glassware">
                     <!--<freejoint />-->
                     <!--<geom  
@@ -140,17 +143,17 @@ def color_map(c, s=0.8):
                           zaxis="0 -1 0"
                           material="glass_material" /> 
                </body>  
-
+               ]]>
                 
                 <body euler="0 0 1.57" pos="-0.15 0.4 0.3">
                     <ur5e name='arm'>
                        <robotiq-2f85 name="gripper" left_tip="{True}" right_tip="{True}" parent="ee_link"> 
-                          <body pos="0.02 -0.017 0.053" xyaxes="0 -1 0 1 0 0" parent="right_tip">
+                            <body pos="0.02 -0.017 0.053" xyaxes="0 -1 0 1 0 0" parent="right_tip">
                                 <geltip name="left_geltip" cubic_core="{True}" label_color="255 0 0"/>
                             </body>
-                           <body pos="-0.02 -0.017 0.053" xyaxes="0 1 0 -1 0 0" parent="left_tip">
+                           <!--<body pos="-0.02 -0.017 0.053" xyaxes="0 1 0 -1 0 0" parent="left_tip">
                                 <geltip name="right_geltip" cubic_core="{True}" label_color="0 255 0"/>
-                            </body>
+                            </body>-->
                         </robotiq-2f85> 
                     </ur5e> 
                 </body>
@@ -187,9 +190,9 @@ class PickAndPlaceBehaviour:
         self.pl: Platform = injector.get(Platform)
         self.config = config
 
-        # self.memory = Memory(self.body, self.config, skip_right_sensor=False)
+        self.memory = Memory(config['data_path'],config['dataset_name'],self.body, self.config, skip_right_sensor=True)
 
-        self.DOWN = [3.11, 1.6e-7, 3.11]
+        self.DOWN = [-0.006517287775752023, 1.586883858342641, 0.02436554436467914]
         self.BLOCK_SIZE = 0.06
         print('-------> ', config['sx'])
         sx = config['sx'] * 0.01
@@ -205,7 +208,7 @@ class PickAndPlaceBehaviour:
 
     def wait(self, arm=None, gripper=None):
         def cb():
-            # self.memory.save()
+            self.memory.save()
 
             self.pl.wait_seconds(0.5)
 
@@ -238,39 +241,41 @@ class PickAndPlaceBehaviour:
 
         # test arm
         # set the arm in the initial position
-        print('MOVED ORIGIN', [0, 0, 0, 0, 0, 0])
-        self.pl.wait(self.body.arm.move_q([0, 0, 0, 0, 0, 0]))
-
+        ORIGIN_J = [-2.2411182562457483, -2.4866768322386683, -1.1765309572219849, -2.603385110894674, 2.4535810947418213, -1.5498078505145472]
+        self.pl.wait(self.body.arm.move_q(ORIGIN_J))
         print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED ORIGIN')
-        self.pl.wait_seconds(10)
-        self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN))
 
-        # cv2.imwrite(f'bkg.jpg', self.memory.prepare_frame(self.body.cam.read()))
+        cv2.imwrite(f'bkg.jpg', self.memory.prepare_frame(self.body.cam.read()))
         # exit(-1)
+        self.memory.prepare()
 
-        # self.memory.prepare()
-
-        # do the pick and place.
-        for i in range(len(self.pick_blocks)):
+        # do the wear
+        for i in range(4):
             # before grasping.
-            move_arm(self.START_POS_UP)
-
-            # grasps block.
-            # move_arm(z(self.START_POS_DOWN, -i * self.BLOCK_SIZE))
             # move_gripper(0.26)
-            #
-            # # moves.
-            # move_arm(self.START_POS_UP)
-            # move_arm(self.END_POS_UP)
+            # p1
+            p1 = [-0.44401382678115653, -0.44730236014909425, 0.0406047505555867]
+            move_arm(p1)
+            print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED P1')
 
-            # places.
-            # move_arm(z(self.END_POS_DOWN, -(2 - i) * self.BLOCK_SIZE))
-            # move_gripper(0)
+            # p2
+            p2 = [-0.4277706049994471, -0.4472889688144456, 0.062198323173402986]
+            move_arm(p2)
+            print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED P2')
+            
+            # p4
+            p3 = [-0.4277706049994471, -0.4472889688144456, 0.062198323173402986]
+            move_arm(p3)
+            print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED P3')
 
-            # # moves back
-            # move_arm(self.END_POS_UP)
-            # move_arm(self.START_POS_UP)
+            # p4
+            p4 = [-0.4277706049994471, -0.4472889688144456, 0.062198323173402986]
+            move_arm(p4)
+            print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED P4')
 
+            # moves back
+            p0 = [-0.42777175443488147, -0.4472821869932463, 0.12572038820870515]
+            move_arm(p0)
 
 def launch_world(**kwargs):
     Platform.create({
@@ -294,13 +299,13 @@ def launch_world(**kwargs):
                     'class': PlatformHW,
                     'interfaces': {
                         '/left_geltip': {
-                            'cam_id': 0
+                            'cam_id': 2
                         },
-                        '/right_geltip': {
-                            'cam_id': "/dev/video2"
-                        },
+                        # '/right_geltip': {
+                        #     'cam_id': 2
+                        # },
                         '/cam': {
-                            'cam_id': 5
+                            'cam_id': 4
                         }
                     }
                 },
@@ -312,7 +317,7 @@ def launch_world(**kwargs):
 
 if __name__ == '__main__':
     launch_world(**{
-        'data_path': '/home/danfergo/data',
+        'data_path': './data',
         'dataset_name': 'grasp_rw',
         'it': 1,
         'sx': 0.12,

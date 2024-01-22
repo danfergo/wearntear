@@ -2,6 +2,7 @@ import os
 import numpy as np
 from .urx import Robot
 from .urx.robot import RobotException
+import time
 
 from yarok.comm.utils.PID import PID
 
@@ -69,15 +70,7 @@ class UR5eInterfaceMJC:
     def __init__(self, interface: InterfaceMJC, config: ConfigBlock):
         self.interface = interface
         self.speed = config['speed']
-        initial_q = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-
+        initial_q = [-2.2411182562457483, -2.4866768322386683, -1.1765309572219849, -2.603385110894674, 2.4535810947418213, -1.5498078505145472]
         self.ws = [
             [- pi, pi],  # shoulder pan
             [- pi, 0],  # shoulder lift,
@@ -253,7 +246,7 @@ class UR5eInterfaceMJC:
         else:
             target = self.target_q
 
-        [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))]
+        [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))] #move
 
         if sae(self.last_q, self.q) < 1e-6:
             self.stopped_steps += 1
@@ -314,15 +307,7 @@ class UR5eInterfaceHW:
         self.robot.set_payload(1.39, (0, 0, 0))
 
         self.speed = 0.3
-        initial_q = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-
+        initial_q = [-2.24741775194277, -2.4600631199278773, -1.1417940855026245, -2.66496004680776, 2.446993589401245, -1.5501912275897425]
         self.ws = [
             [- pi, pi],  # shoulder pan
             [- pi, 0],  # shoulder lift,
@@ -339,10 +324,14 @@ class UR5eInterfaceHW:
         self.start_t = time.time()
         self.delta_t = 0
 
+
+        self.probe_interval = 0.1
+        self.next_probe_ts = time.time()+self.probe_interval
+   
         self.ur5_kin = ikfastpy.PyKinematics()
         self.n_joints = self.ur5_kin.getDOF()
 
-        self.pids = [PID(P=0.05, I=0.0, D=0.0) for i in range(self.n_joints)]
+        self.pids = [PID(P=0.5, I=0, D=0.01) for i in range(self.n_joints)]
 
     def is_ready(self):
         # required by PlatformHW/interfaceHW,
@@ -439,22 +428,26 @@ class UR5eInterfaceHW:
         else:
             target = self.target_q
 
-        # if self.is_at(self.target_q):
-        # else: 
+        # print('target',target)
+        # print('--'*50)
 
-        # if self.stopped_steps |
         try:
             #     self.robot.speedj()
             [self.pids[i].setTarget(target[i]) for i in range(self.n_joints)]
             [self.pids[i].update(self.q[i]) for i in range(self.n_joints)]
             qv = [self.pids[i].output for i in range(self.n_joints)]
+            
+            if time.time() > self.next_probe_ts:
+                self.next_probe_ts = time.time() + self.probe_interval
+                self.robot.speedj(qv, 0.03, 1)  
+                # print('-'*100)
+                
+            # time.sleep(0.1)
+            # qv = np.abs(qv).sum()
+            # print('qv',qv)
+            # print('-'*100)
+            # self.robot.movej(target)
 
-            # qv = np.array(target) - np.array(self.q)
-            # qv = list(qv * 0.03) # / np.linalg.norm(qv) 
-            # print('qv', qv)
-            # print('tar', target)
-            # print(qv)
-            self.robot.speedj(qv, 0.3, 0.5)
         except RobotException:
             print('robot stopped')
         # [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))]
@@ -471,9 +464,23 @@ class UR5eInterfaceHW:
         transformation_matrix = self.get_transformation_matrix(self.q)
         return self.get_pose_vectors(transformation_matrix)
 
+    # def is_at(self, q):
+    #     err = sae(q, self.q)
+    #     print('err', err)
+    #     return err < 0.006 or (err < 0.025 and self.stopped_steps >= 30)
+
+
+    def at(self):
+        return self.q
+
+    def at_xyz(self):
+        transformation_matrix = self.get_transformation_matrix(self.q)
+        return self.get_pose_vectors(transformation_matrix)
+
     def is_at(self, q):
         err = sae(q, self.q)
-        print('err', err)
+        print('at:',self.q)
+        # print('err', err)
         return err < 0.006 or (err < 0.025 and self.stopped_steps >= 30)
 
 

@@ -13,4 +13,4 @@ class RobotBody:
         self.arm: UR5e = injector.get('arm')
         self.gripper: Robotiq2f85 = injector.get('gripper')
         self.left_geltip: GelTip = injector.get('left_geltip')
-        self.right_geltip: GelTip = injector.get('right_geltip')
+        # self.right_geltip: GelTip = injector.get('right_geltip')
