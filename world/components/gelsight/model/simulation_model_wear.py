@@ -132,7 +132,7 @@ class SimulationApproach:
 
         crack = create_crack(crack, crack_pt, global_propagation_vector)
         crack = create_crack(crack, crack_pt, global_propagation_vector2)
-        self.crack_mask = 1.0 - crack
+        self.tear_mask = 1.0 - crack
 
     def protrusion_map(self, original, not_in_touch):
         protrusion_map = np.copy(original)
@@ -289,7 +289,7 @@ class SimulationApproach:
         dilatation_size = 3
         element = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
                                        (dilatation_size, dilatation_size))
-        dilated_crack_mask = cv2.dilate(self.crack_mask, element)
+        dilated_crack_mask = cv2.dilate(self.tear_mask, element)
         ksize = (3, 3)
         dilated_crack_mask = cv2.blur(dilated_crack_mask, ksize)
 
@@ -308,7 +308,7 @@ class SimulationApproach:
             alpha = light['alpha'] if 'alpha' in light else self.default_alpha
             out = add_overlay(out, self.phong_illumination(T, light['position'], kd, ks, alpha), light['color'])
 
-        c3 = np.stack([self.crack_mask for i in range(3)], axis=2)
+        c3 = np.stack([self.tear_mask for i in range(3)], axis=2)
 
         out = (((c3 * rgb / 255.0) + (1 - c3) * out / 255.0) * 255).astype(np.uint8)
 

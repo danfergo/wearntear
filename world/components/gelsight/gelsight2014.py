@@ -24,10 +24,8 @@ class GelSight2014InterfaceMJC:
                 {'position': [-1, 0, 0.25], 'color': (255, 130, 115), 'kd': 0.5, 'ks': 0.3},  # blue, right
                 {'position': [0, -1, 0.25], 'color': (108, 82, 255), 'kd': 0.6, 'ks': 0.4},  # red, bottom
                 {'position': [1, 0, 0.25], 'color': (120, 255, 153), 'kd': 0.1, 'ks': 0.1}  # green, left
-
                 # {'position': [-1, 0, 0.25], 'color': (255, 255, 255), 'kd': 0.5, 'ks': 0.3},  # white, top
                 # {'position': [0, 0, 1], 'color': (255, 255, 255), 'kd': 0.5, 'ks': 0.3},  # blue, right
-
             ],
             'background_img': cv2.imread(os.path.dirname(__file__) + '/background_gelsight2014.png'),
             'ka': 0.8,
@@ -41,6 +39,12 @@ class GelSight2014InterfaceMJC:
         self.raw_rgb, self.raw_depth = self.interface.read_camera('camera', shape, True)
         self.tactile_rgb = self.approach.generate(self.raw_depth, self.raw_rgb)
         return self.tactile_rgb
+
+    def read_wear(self):
+        return self.approach.wear_mask
+
+    def read_tear(self):
+        return self.approach.tear_mask
 
     def read_depth(self):
         return self.raw_depth
@@ -125,4 +129,10 @@ class GelSight2014:
         """
 
     def read(self):
+        pass
+
+    def read_depth(self):
+        pass
+
+    def read_wear(self):
         pass
