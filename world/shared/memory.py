@@ -41,8 +41,9 @@ class Memory:
             yaml.dump(self.config, outfile)
 
     def prepare_frame(self, frame):
+        # print('frame.shape',frame.shape)
         frame = cv2.resize(frame, self.resolution)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         # frame = frame[:, self.side_crop:self.side_crop + self.min_side, :]
         # frame = cv2.resize(frame, (self.min_side, self.min_side))
         return frame

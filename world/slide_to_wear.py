@@ -30,13 +30,13 @@ from math import pi
         Cam
     ],
     defaults={
-        'color_map': color_map,
-        'bs': 0.03,
-        'sx': 0,
-        'sy': 0,
-        'ex': 0,
-        'ey': 0,
-        'pick_blocks': ['red', 'green', 'blue', 'cyan'],
+        # 'color_map': color_map,
+        # 'bs': 0.03,
+        # 'sx': 0,
+        # 'sy': 0,
+        # 'ex': 0,
+        # 'ey': 0,
+        # 'pick_blocks': ['red', 'green', 'blue', 'cyan'],
         # 'placed_blocks': ['yellow', 'green'],
     },
     template="""
@@ -58,30 +58,37 @@ from math import pi
                     type="cube" 
                     file="assets/brown_wood.png"
                     width="400"
-                    height="400"/>                  
+                    height="400"/>    
+                
+                <mesh name="mount" file="assets/wear_mount.stl" />
+                              
                 <material name="wood" texture="wood_texture" specular="0.1"/>
                 <material name="gray_wood" texture="wood_texture" rgba="0.6 0.4 0.2 1" specular="0.1"/>
                 <material name="white_wood" texture="wood_texture" rgba="0.6 0.6 0.6 1" specular="0.1"/>
                 <material name="brown_wood" texture="brown_wood_texture" rgba="0.6 0.6 0.6 1" specular="0.1"/>
+                <material name="black_metal" rgba="0.05 0.05 0.05 1" specular="1.0"/>
+                <material name="black_plastic" rgba="1 0.2 0.2 1" specular="0.1"/>
             </asset>
             <default>
-                <default class='pp-block'>
+                <!-- <default class='pp-block'>
                      <geom type="box" 
                            size="{bs} {bs} {bs}"
                            mass="0.0001"
                            material="wood"
                            zaxis="0 1 0"/>
-                </default>
+                </default> -->
             </default>
             <worldbody>
+                <!-- 
                 <light directional="true" 
                     diffuse="{color_map(light, 0.1)}" 
                     specular="{color_map(light, 0.1)}" 
                     pos="1.0 1.0 5.0" 
                     dir="0 -1 -1"/>
+                -->
                 <body pos="{0.3 + p_cam[0]*0.1} -1.3 {0.6 + p_cam[0]*0.1}" euler="1.57 -3.14 0">
                     <cam name="cam" />
-                </body>
+                </body> 
                 
                 <!-- pick blocks -->
                 <!-- <for each="range(len(pick_blocks))" as="i">
@@ -108,19 +115,23 @@ from math import pi
                     <geom type="box" pos="0 0.45 0" size="0.8 0.05 1.0" material="white_wood"/>
                </body>  
                
+               <body pos="0 0 0" name="mount_body">
+                   <geom pos="0.5 -0.5 0.5" mesh="mount" material="black_plastic"/>
+               </body>  
+                
                <body pos="0 0 0" name="table_base">
-                    <geom type="box" pos="0 0 0.2" size="0.8 0.4 0.1" material="brown_wood"/>
+                    <geom type="box" pos="0.5 -0.5 0.3" size="0.2 0.2 0.01" material="black_metal"/>
+                    <geom type="box" pos="0 0 0.2" size="0.8 0.8 0.1" material="white_wood"/>
                </body>  
                 
                 <body euler="0 0 3.14" pos="0 -0.2 0.3">
                     <ur5e name='arm'>
                        <robotiq-2f85 name="gripper" left_tip="{False}" right_tip="{False}" parent="ee_link"> 
-                          <body pos="0.02 -0.017 0.01" xyaxes="0 -1 0 1 0 0" parent="right_tip">
+                          <body euler="1.57079 0 -1.57079" parent="left_tip">
+                            <body pos="-0.07 0 0">
                                 <gelsight2014 name="left_geltip" label_color="255 0 0"/>
                             </body>
-                           <body pos="-0.02 -0.017 0.01" xyaxes="0 1 0 -1 0 0" parent="left_tip">
-                                <gelsight2014 name="right_geltip" label_color="0 255 0"/>
-                            </body>
+                           </body>
                         </robotiq-2f85> 
                     </ur5e> 
                 </body>
@@ -128,7 +139,7 @@ from math import pi
         </mujoco>
     """
 )
-class BlocksTowerTestWorld:
+class WearNTearWorld:
     pass
 
 
@@ -150,25 +161,34 @@ class SlideToWear:
             [0, pi],  # wrist 2
             [- 2 * pi, 2 * pi]  # wrist 3
         ])
-        self.body.arm.set_speed(pi / 24)
+        self.body.arm.set_speed(pi / 12)
         self.pl: Platform = injector.get(Platform)
         self.config = config
-        self.memory = Memory(config['data_path'], 'wear', self.body, self.config, skip_right_sensor=False)
+        self.memory = Memory(config['data_path'],
+                             config['dataset_name'],
+                             self.body,
+                             self.config,
+                             skip_right_sensor=True)
 
-        self.DOWN_DIRECTION = [3.11, 1.6e-7, 3.11]
+        # self.DOWN_DIRECTION = [3.11, 1.6e-7, 3.11]
+        # Zhuo's horizontal -0.006517287775752023, 1.586883858342641, 0.02436554436467914
+        self.DOWN_DIRECTION = [3.140,  1.546, -3.114]
 
-        self.n_slides = config['pick_blocks']
+        self.speed = config['speed']
+        self.hardness = config['hardness']
+        self.load_dz = config['load_dz']
+        self.load_dy = config['load_dy']
 
-        self.START_POS_UP = [0.3, -0.31, 0.21]
-        self.START_POS_DOWN = [0.3, -0.31, 0.11]
-        self.END_POS_UP = [0.3, -0.61, 0.21]
-        self.END_POS_DOWN = [0.3, -0.61, 0.115]
+        self.START_POS_UP = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168]
+        self.START_POS_DOWN = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
+        self.END_POS_DOWN = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
+        self.END_POS_UP = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168]
 
-    def wait(self, arm=None, gripper=None):
+    def wait_and_record(self, arm=None, gripper=None):
         def cb():
             self.memory.save()
 
-            self.pl.wait_seconds(0.1)
+            self.pl.wait_seconds(0.3)
 
             if arm is not None:
                 return self.body.arm.is_at(arm)
@@ -178,51 +198,56 @@ class SlideToWear:
         self.pl.wait(cb)
 
     def on_start(self):
-        def move_arm(p):
-            q = self.body.arm.ik(xyz=p, xyz_angles=self.DOWN_DIRECTION)
-            if q is None:
-                print(p)
-
-            self.body.arm.move_q(q)
-            self.wait(arm=q)
-
-        def move_gripper(q):
-            self.body.gripper.close(q)
-            self.wait(gripper=q)
-
-        # set the arm in the initial position
-        self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN_DIRECTION))
 
         self.memory.prepare()
 
-        # do the pick and place.
-        for i in range(len(self.n_slides)):
-            move_arm(self.START_POS_UP)
+        print('-------------')
+        print(f'Collecting data for {self.hardness} !!!!')
+        # xyz, _ = self.body.arm.at_xyz()
+        # print('xyz',xyz)
+        # xyz = [xyz[0],xyz[1],xyz[2]-0.01]
+        # self.pl.wait(self.body.arm.move_xyz(xyz=xyz, xyz_angles=self.DOWN_DIRECTION))
+        # print(self.body.arm.at_xyz())
 
-            # # grasps block.
-            move_arm(self.START_POS_DOWN)
-            # move_gripper(0.26)
-            #
-            # # moves.
-            move_arm(self.END_POS_DOWN)
-            move_arm(self.END_POS_UP)
-            # move_arm(self.START_POS_UP)
-            #
-            # # places.
-            # move_arm(z(self.END_POS_DOWN, -(2 - i) * self.BLOCK_SIZE))
-            # move_gripper(0)
-            #
-            # # moves back
-            move_arm(self.END_POS_UP)
-            # move_arm(self.START_POS_UP)
+        self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN_DIRECTION))
+        
+        # Moves above start position.
+        # self.pl.wait(self.body.gripper.close())
+        self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN_DIRECTION))
+        print("moved 0")
+
+        # Moves to start position.
+        self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_DOWN, xyz_angles=self.DOWN_DIRECTION))
+        self.pl.wait_seconds(2)
+        print("moved 1")
+
+        # Moves and records.
+        print('Move and record...')
+        q = self.body.arm.ik(xyz=self.END_POS_DOWN, xyz_angles=self.DOWN_DIRECTION)
+        self.body.arm.move_q(q)
+        self.wait_and_record(arm=q)
+        self.pl.wait_seconds(2)
+        print('End recording.')
+        print("moved 2")
+
+        # moves back
+        self.pl.wait(self.body.arm.move_xyz(xyz=self.END_POS_UP, xyz_angles=self.DOWN_DIRECTION))
+        print('end.')
+        self.pl.wait_seconds(2)
+        print("moved 3")
+
+
+    def on_update(self):
+        return True
+
 
 
 def launch_world(**kwargs):
     Platform.create({
-        'world': BlocksTowerTestWorld,
+        'world': WearNTearWorld,
         'behaviour': SlideToWear,
         'defaults': {
-            'environment': 'sim',  # update this to sim for running in sim environment.
+            'environment': 'real',  # update this to sim for running in sim environment.
             'behaviour': kwargs,
             'components': {
                 '/': kwargs
@@ -231,7 +256,14 @@ def launch_world(**kwargs):
         'environments': {
             'sim': {
                 'platform': {
-                    'class': PlatformMJC
+                    'class': PlatformMJC,
+                    'interfaces': {
+                        '/arm': {
+                            # it seems that there's a bug in yarok,
+                            # so I've repeated in the interface
+                            'initial_position': ([-0.44, -0.44, 0.3], [0.0, 1.6, 0.0])
+                        }
+                    }
                 },
             },
             'real': {
@@ -239,13 +271,13 @@ def launch_world(**kwargs):
                     'class': PlatformHW,
                     'interfaces': {
                         '/left_geltip': {
-                            'cam_id': 0
+                            'cam_id': 2
                         },
-                        '/right_geltip': {
-                            'cam_id': "/dev/video2"
-                        },
+                        # '/right_geltip': {
+                        #     'cam_id': "/dev/video2"
+                        # },
                         '/cam': {
-                            'cam_id': 5
+                            'cam_id': 4
                         }
                     }
                 },
@@ -256,31 +288,25 @@ def launch_world(**kwargs):
 
 
 def main():
-    parallel = False
-
-    if parallel:
-        run_all(launch_world, {
-            'sx': range(0, 5),
-            'sy': range(0, 5),
-            'ex': range(0, 5),
-            'ey': range(0, 5),
-            'light': lambda: choice(colors_names),
-            'pick_blocks': lambda: sample(colors_names, 3),
-            'p_cam': lambda: (randint(-2, 3), randint(-1, 2)),
-        }, parallel=4)
-    else:
-        launch_world(**{
-            'it': 1,
-            'sx': 0,
-            'sy': 0,
-            'ex': 0,
-            'ey': 0,
-            'light': 'white',
-            'p_cam': (0, 0),
-            'pick_blocks': ['red', 'green', 'blue'],
-            'placed_blocks': [],
-            'data_path': './data/'
-        })
+    # multi = False
+    #
+    # if multi:
+    #     run_all(launch_world, {
+    #         'hardness': ['SMOOTH', 'HARD'],
+    #         'speed': range(-1, -1 + 3),
+    #         'load_dz': [1, 0, -1, -2],
+    #     }, parallel=4)
+    # else:
+    launch_world(**{
+        'data_path': './data/',
+        'dataset_name': 'grasp_rw',
+        'hardness': 'Rough',
+        'speed': 0,
+        'load_dz': -0.8,
+        'load_dy': +2,
+        'p_cam': (0, 0),
+        'it': 9,
+    })
 
 
 if __name__ == '__main__':

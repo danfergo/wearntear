@@ -173,7 +173,6 @@ def z(pos, delta):
 
 import cv2
 
-
 class PickAndPlaceBehaviour:
 
     def __init__(self, injector: Injector, config: ConfigBlock):
@@ -192,7 +191,7 @@ class PickAndPlaceBehaviour:
 
         self.memory = Memory(config['data_path'],config['dataset_name'],self.body, self.config, skip_right_sensor=True)
 
-        self.DOWN = [-0.006517287775752023, 1.586883858342641, 0.02436554436467914]
+        self.DOWN = [-0.023595288766984333, 1.592056215095842, 0.028673169856898113]
         self.BLOCK_SIZE = 0.06
         print('-------> ', config['sx'])
         sx = config['sx'] * 0.01
@@ -241,7 +240,7 @@ class PickAndPlaceBehaviour:
 
         # test arm
         # set the arm in the initial position
-        ORIGIN_J = [-2.2411182562457483, -2.4866768322386683, -1.1765309572219849, -2.603385110894674, 2.4535810947418213, -1.5498078505145472]
+        ORIGIN_J = [-2.25491172472109, -2.5394441090025843, -0.9417299032211304, -2.778252264062399, 2.4256486892700195, -1.553070370350973]
         self.pl.wait(self.body.arm.move_q(ORIGIN_J))
         print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED ORIGIN')
 
@@ -254,7 +253,7 @@ class PickAndPlaceBehaviour:
             # before grasping.
             # move_gripper(0.26)
             # p1W
-            p1 = [-0.44401382678115653, -0.44730236014909425, 0.0406047505555867]
+            p1 = [-0.433394412491949, -0.44934583487078533, 0.004534438267663374]
             move_arm(p1)
             print('MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOVED P1')
 
@@ -299,13 +298,13 @@ def launch_world(**kwargs):
                     'class': PlatformHW,
                     'interfaces': {
                         '/left_geltip': {
-                            'cam_id': 2
+                            'cam_id': 4
                         },
                         # '/right_geltip': {
                         #     'cam_id': 2
                         # },
                         '/cam': {
-                            'cam_id': 4
+                            'cam_id': 0
                         }
                     }
                 },

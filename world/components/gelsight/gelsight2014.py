@@ -5,10 +5,10 @@ from yarok.platforms.mjc.interface import InterfaceMJC
 import cv2
 import os
 import numpy as np
-
 from .model.simulation_model_wear import SimulationApproach
 
 
+from yarok import ConfigBlock
 @interface()
 class GelSight2014InterfaceMJC:
 
@@ -45,6 +45,23 @@ class GelSight2014InterfaceMJC:
     def read_depth(self):
         return self.raw_depth
 
+@interface()
+class GelSight2014InterfaceHW:
+
+    def __init__(self, config: ConfigBlock):
+        self.cap = cv2.VideoCapture(config['cam_id'])
+        if not self.cap.isOpened():
+            raise Exception('GelTip cam ' + str(config['cam_id']) + ' not found')
+
+        self.fake_depth = np.zeros((480, 640), np.float32)
+
+    def read(self):
+        [self.cap.read() for _ in range(10)]  # skip frames in the buffer.
+        ret, frame = self.cap.read()
+        return frame
+
+    def read_depth(self):
+        return self.fake_depth
 
 @component(
     tag='gelsight2014',
@@ -53,6 +70,7 @@ class GelSight2014InterfaceMJC:
     ],
     defaults={
         'interface_mjc': GelSight2014InterfaceMJC,
+        'interface_hw': GelSight2014InterfaceHW,
         'probe': lambda c: {'gelsight camera': c.read()}
     },
     # language=xml
