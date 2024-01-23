@@ -2,6 +2,7 @@ import os
 import numpy as np
 from .urx import Robot
 from .urx.robot import RobotException
+import time
 
 from yarok.comm.utils.PID import PID
 
@@ -243,7 +244,7 @@ class UR5eInterfaceMJC:
         else:
             target = self.target_q
 
-        [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))]
+        [self.interface.set_ctrl(a, target[a]) for a in range(len(self.interface.actuators))] #move
 
         if sae(self.last_q, self.q) < 1e-6:
             self.stopped_steps += 1
@@ -304,8 +305,12 @@ class UR5eInterfaceHW:
         self.robot.set_payload(1.39, (0, 0, 0))
 
         self.speed = 0.3
-        initial_q = [-2.24741775194277, -2.4600631199278773, -1.1417940855026245, -2.66496004680776, 2.446993589401245,
-                     -1.5501912275897425]
+        initial_q =  self.robot.getj()
+        #0 [-2.285238806401388, -2.668793340722555, -1.0239273309707642, -2.5667320690550746, 2.396190881729126, -1.5533869902240198]
+        #1 [-2.285257641469137, -2.670359273950094, -1.0238468647003174, -2.5652858219542445, 2.396280288696289, -1.5533869902240198]
+        #2 [-2.263064686452047, -2.6333824596800746, -1.1028790473937988, -2.522545953790182, 2.4185383319854736, -1.5523689428912562]
+        #3 [-2.2630680243121546, -2.6321307621397914, -1.1029702425003052, -2.5237022838988246, 2.418497323989868, -1.5523837248431605]
+
         self.ws = [
             [- pi, pi],  # shoulder pan
             [- pi, 0],  # shoulder lift,
@@ -321,14 +326,13 @@ class UR5eInterfaceHW:
         self.target_q = initial_q
         self.start_t = time.time()
         self.delta_t = 0
-
         self.probe_interval = 0.1
         self.next_probe_ts = time.time() + self.probe_interval
 
         self.ur5_kin = ikfastpy.PyKinematics()
         self.n_joints = self.ur5_kin.getDOF()
 
-        self.pids = [PID(P=0.5, I=0, D=0.01) for i in range(self.n_joints)]
+        self.pids = [PID(P=0.8, I=0.02, D=0) for i in range(self.n_joints)]
 
     def is_ready(self):
         # required by PlatformHW/interfaceHW,
@@ -436,7 +440,7 @@ class UR5eInterfaceHW:
 
             if time.time() > self.next_probe_ts:
                 self.next_probe_ts = time.time() + self.probe_interval
-                self.robot.speedj(qv, 0.03, 1)
+                self.robot.speedj(qv, 1000, 0.1)
                 # print('-'*100)
 
             # time.sleep(0.1)
@@ -475,7 +479,7 @@ class UR5eInterfaceHW:
 
     def is_at(self, q):
         err = sae(q, self.q)
-        print('at:', self.q)
+        # print('at:', self.q)
         # print('err', err)
         return err < 0.006 or (err < 0.025 and self.stopped_steps >= 30)
 

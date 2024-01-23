@@ -12,7 +12,7 @@ class Robotiq2f85InterfaceHW:
 
     def __init__(self):
         self.gripper = RobotiqGripper()
-        self.gripper.connect("10.40.101.100", 63352, socket_timeout=10)
+        self.gripper.connect("10.40.101.100", 63352)
 
         # if not gripper.is_active():
         # print('gripper not active, activating ...')
@@ -125,7 +125,7 @@ class Robotiq2f85MJCInterfaceMJC:
     tag='robotiq-2f85',
     defaults={
         'interface_mjc': Robotiq2f85MJCInterfaceMJC,
-        'interface_hw': Robotiq2f85InterfaceHW,
+        # 'interface_hw': Robotiq2f85InterfaceHW,
         'left_tip': True,
         'right_tip': True
     },

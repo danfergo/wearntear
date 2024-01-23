@@ -418,8 +418,6 @@ class URRobot(object):
         return self.rtmon
 
 
-
-
 class Robot(URRobot):
     """
     Generic Python interface to an industrial robot.

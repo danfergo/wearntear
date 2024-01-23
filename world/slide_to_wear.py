@@ -161,7 +161,7 @@ class SlideToWear:
             [0, pi],  # wrist 2
             [- 2 * pi, 2 * pi]  # wrist 3
         ])
-        self.body.arm.set_speed(pi / 24)
+        self.body.arm.set_speed(pi / 12)
         self.pl: Platform = injector.get(Platform)
         self.config = config
         self.memory = Memory(config['data_path'],
@@ -172,26 +172,23 @@ class SlideToWear:
 
         # self.DOWN_DIRECTION = [3.11, 1.6e-7, 3.11]
         # Zhuo's horizontal -0.006517287775752023, 1.586883858342641, 0.02436554436467914
-        self.DOWN_DIRECTION = [0.0, 1.595, 0.03]
+        self.DOWN_DIRECTION = [3.140,  1.546, -3.114]
 
         self.speed = config['speed']
         self.hardness = config['hardness']
         self.load_dz = config['load_dz']
+        self.load_dy = config['load_dy']
 
-        # Zhuo's points
-        # p1 = [-0.44401382678115653, -0.44730236014909425, 0.0406047505555867]
-        # p2, p3, p4 = [-0.4277706049994471, -0.4472889688144456, 0.062198323173402986]
-        # p0 = [-0.42777175443488147, -0.4472821869932463, 0.12572038820870515]
-        self.START_POS_UP = [-0.44, -0.447, 0.12]
-        self.START_POS_DOWN = [-0.44, -0.447, 0.11 + self.load_dz * 0.001]
-        self.END_POS_DOWN = [-0.44, -0.47, 0.11 + self.load_dz * 0.001]
-        self.END_POS_UP = [-0.44, -0.47, 0.12]
+        self.START_POS_UP = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168]
+        self.START_POS_DOWN = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
+        self.END_POS_DOWN = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
+        self.END_POS_UP = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168]
 
     def wait_and_record(self, arm=None, gripper=None):
         def cb():
             self.memory.save()
 
-            self.pl.wait_seconds(0.1)
+            self.pl.wait_seconds(0.3)
 
             if arm is not None:
                 return self.body.arm.is_at(arm)
@@ -206,14 +203,23 @@ class SlideToWear:
 
         print('-------------')
         print(f'Collecting data for {self.hardness} !!!!')
+        # xyz, _ = self.body.arm.at_xyz()
+        # print('xyz',xyz)
+        # xyz = [xyz[0],xyz[1],xyz[2]-0.01]
+        # self.pl.wait(self.body.arm.move_xyz(xyz=xyz, xyz_angles=self.DOWN_DIRECTION))
+        # print(self.body.arm.at_xyz())
 
-        # Moves above start position.
-        self.pl.wait(self.body.gripper.close())
         self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN_DIRECTION))
+        
+        # Moves above start position.
+        # self.pl.wait(self.body.gripper.close())
+        self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_UP, xyz_angles=self.DOWN_DIRECTION))
+        print("moved 0")
 
         # Moves to start position.
         self.pl.wait(self.body.arm.move_xyz(xyz=self.START_POS_DOWN, xyz_angles=self.DOWN_DIRECTION))
         self.pl.wait_seconds(2)
+        print("moved 1")
 
         # Moves and records.
         print('Move and record...')
@@ -222,14 +228,18 @@ class SlideToWear:
         self.wait_and_record(arm=q)
         self.pl.wait_seconds(2)
         print('End recording.')
+        print("moved 2")
 
         # moves back
         self.pl.wait(self.body.arm.move_xyz(xyz=self.END_POS_UP, xyz_angles=self.DOWN_DIRECTION))
         print('end.')
         self.pl.wait_seconds(2)
+        print("moved 3")
+
 
     def on_update(self):
         return True
+
 
 
 def launch_world(**kwargs):
@@ -237,7 +247,7 @@ def launch_world(**kwargs):
         'world': WearNTearWorld,
         'behaviour': SlideToWear,
         'defaults': {
-            'environment': 'sim',  # update this to sim for running in sim environment.
+            'environment': 'real',  # update this to sim for running in sim environment.
             'behaviour': kwargs,
             'components': {
                 '/': kwargs
@@ -261,13 +271,13 @@ def launch_world(**kwargs):
                     'class': PlatformHW,
                     'interfaces': {
                         '/left_geltip': {
-                            'cam_id': 0
+                            'cam_id': 2
                         },
-                        '/right_geltip': {
-                            'cam_id': "/dev/video2"
-                        },
+                        # '/right_geltip': {
+                        #     'cam_id': "/dev/video2"
+                        # },
                         '/cam': {
-                            'cam_id': 5
+                            'cam_id': 4
                         }
                     }
                 },
@@ -290,11 +300,12 @@ def main():
     launch_world(**{
         'data_path': './data/',
         'dataset_name': 'grasp_rw',
-        'hardness': 'SMOOTH',
+        'hardness': 'Rough',
         'speed': 0,
-        'load_dz': 0,
+        'load_dz': -0.8,
+        'load_dy': +2,
         'p_cam': (0, 0),
-        'it': 1,
+        'it': 9,
     })
 
 
