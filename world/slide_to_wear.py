@@ -10,7 +10,7 @@ class SlideToWear:
         self.robot = Robot(injector, config)
         self.config = config
 
-        self. : Platform = injector.get(Platform)
+        self.pl: Platform = injector.get(Platform)
 
         self.speed = config['speed']
         self.hardness = config['hardness']
