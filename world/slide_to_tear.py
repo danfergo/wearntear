@@ -3,6 +3,10 @@ from world.shared.robot import Robot
 from yarok import Platform, PlatformMJC, PlatformHW, Injector, component, ConfigBlock
 
 from world.world import shared_config
+from math import pi
+
+
+
 
 class SlideToWear:
 
@@ -10,17 +14,17 @@ class SlideToWear:
         self.robot = Robot(injector, config)
         self.config = config
 
-        self. : Platform = injector.get(Platform)
+        self.pl: Platform = injector.get(Platform)
 
         self.speed = config['speed']
         self.hardness = config['hardness']
         self.load_dz = config['load_dz']
         self.load_dy = config['load_dy']
 
-        self.START_POS_UP = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168]
-        self.START_POS_DOWN = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
-        self.END_POS_DOWN = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
-        self.END_POS_UP = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168]
+        self.START_POS_UP = [-0.468, -0.556 + self.load_dy * 0.001, -0.005]
+        self.START_POS_DOWN = [-0.468, -0.556 + self.load_dy * 0.001, -0.005 + self.load_dz * 0.001]
+        self.END_POS_DOWN = [-0.448, -0.556 + self.load_dy * 0.001, -0.005 + self.load_dz * 0.001]
+        self.END_POS_UP = [-0.448, -0.556 + self.load_dy * 0.001, -0.005]
 
     def on_start(self):
         self.robot.memory.prepare()
@@ -74,7 +78,7 @@ def main():
     #     }, parallel=4)
     # else:
     run(**{
-        'dataset_name': 'wear',
+        'dataset_name': 'tear_knife',
         'data_path': './data/',
         'hardness': 'Rough',
         'speed': 0,

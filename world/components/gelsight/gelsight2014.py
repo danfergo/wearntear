@@ -7,8 +7,9 @@ import os
 import numpy as np
 from .model.simulation_model_wear import SimulationApproach
 
-
 from yarok import ConfigBlock
+
+
 @interface()
 class GelSight2014InterfaceMJC:
 
@@ -49,6 +50,7 @@ class GelSight2014InterfaceMJC:
     def read_depth(self):
         return self.raw_depth
 
+
 @interface()
 class GelSight2014InterfaceHW:
 
@@ -64,8 +66,15 @@ class GelSight2014InterfaceHW:
         ret, frame = self.cap.read()
         return frame
 
+    def read_wear(self):
+        return None
+
+    def read_tear(self):
+        return None
+
     def read_depth(self):
         return self.fake_depth
+
 
 @component(
     tag='gelsight2014',

@@ -4,7 +4,7 @@ from random import sample, randint, choice
 import yaml
 
 from world.shared.memory import Memory
-from world.shared.robotbody import RobotBody
+from world.shared.robot import Robot
 from .components.geltip.geltip import GelTip
 from .components.tumble_tower.tumble_tower import TumbleTower
 from .components.ur5e.ur5e import UR5e
@@ -176,7 +176,7 @@ import cv2
 class PickAndPlaceBehaviour:
 
     def __init__(self, injector: Injector, config: ConfigBlock):
-        self.body = RobotBody(injector)
+        self.body = Robot(injector)
         self.body.arm.set_ws([
             [- pi, pi],  # shoulder pan
             [- pi, -pi / 2],  # shoulder lift,

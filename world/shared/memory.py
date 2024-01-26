@@ -55,7 +55,7 @@ class Memory:
         cv2.imwrite(f'{self.data_path}/c/frame_{str(self.i).zfill(5)}.jpg', cam_frame)
 
         # left touch sensor
-        left_touch_frame = self.prepare_frame(self.body.left_geltip.read())
+        left_touch_frame = self.prepare_frame(self.body.l_ots.read())
         cv2.imwrite(f'{self.data_path}/l/frame_{str(self.i).zfill(5)}.jpg', left_touch_frame)
 
         # right touch sensor
