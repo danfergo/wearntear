@@ -4,15 +4,16 @@ import numpy as np
 import os
 
 img_dir = 'data/tear2/rec_00004/l'
+source_dir = 'data/tear2/rec_00004/l/frame_00000.jpg'
 images = sorted([img for img in os.listdir(img_dir)if img.endswith('.jpg')])
-ref_img = cv2.imread(os.path.join(img_dir,images[0]),cv2.IMREAD_COLOR)
+ref_img = cv2.imread(source_dir,cv2.IMREAD_COLOR)
 ref_img = cv2.cvtColor(ref_img,cv2.COLOR_BGR2GRAY)
 
 dif_imgs = []
 pixel_dif = []
 kernel = np.ones((3,3),np.uint8)
 
-for img in images[1:]:
+for img in images[0:]:
     cur_img = cv2.imread(os.path.join(img_dir,img),cv2.IMREAD_GRAYSCALE)
     dif = cv2.absdiff(cur_img,ref_img)
     dif = cv2.GaussianBlur(dif,(3,3),10)
