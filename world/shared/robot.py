@@ -33,7 +33,8 @@ class Robot:
             [0, pi],  # wrist 2
             [- 2 * pi, 2 * pi]  # wrist 3
         ])
-        self.arm.set_speed(pi / 12)
+
+        self.speed = pi / (128 * config['speed'])
 
         # self.DOWN_DIRECTION = [3.11, 1.6e-7, 3.11]
         # Zhuo's horizontal -0.006517287775752023, 1.586883858342641, 0.02436554436467914
@@ -41,17 +42,19 @@ class Robot:
 
     def move_to(self, position, record=False):
         if record:
+            self.arm.set_speed(self.speed)
             q = self.arm.ik(xyz=position, xyz_angles=self.TCP_DIRECTION)
             self.arm.move_q(q)
             self.wait_and_record(arm=q)
         else:
+            self.arm.set_speed(pi / 12)
             self.pl.wait(self.arm.move_xyz(xyz=position, xyz_angles=self.TCP_DIRECTION))
 
     def wait_and_record(self, arm=None, gripper=None):
         def cb():
             self.memory.save()
 
-            self.pl.wait_seconds(0.3)
+            self.pl.wait_seconds(0.1)
 
             if arm is not None:
                 return self.arm.is_at(arm)

@@ -4,11 +4,16 @@ from yarok import Platform, PlatformMJC, PlatformHW, Injector, component, Config
 
 from world.world import shared_config
 
+
+
 class SlideToWear:
 
     def __init__(self, injector: Injector, config: ConfigBlock):
         self.robot = Robot(injector, config)
         self.config = config
+        print('===== >>>', self.robot)
+        print('===== >>>')
+        print('===== >>>')
 
         self.pl: Platform = injector.get(Platform)
 
@@ -24,6 +29,7 @@ class SlideToWear:
 
     def on_start(self):
         self.robot.memory.prepare()
+        self.pl.wait_seconds(10)
         self.pl.wait(self.robot.gripper.close())
 
         print('-------------')
@@ -73,11 +79,12 @@ def main():
     #         'load_dz': [1, 0, -1, -2],
     #     }, parallel=4)
     # else:
+    # speeds: slow, medium, fast
     run(**{
-        'dataset_name': 'wear',
+        'dataset_name': 'sphere',
         'data_path': './data/',
-        'hardness': 'Rough',
-        'speed': 0,
+        'hardness': 'hard',
+        'speed': 1,
         'load_dz': -0.8,
         'load_dy': +2,
         'p_cam': (0, 0),

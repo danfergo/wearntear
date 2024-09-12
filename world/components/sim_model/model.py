@@ -53,8 +53,10 @@ class SimulationModel:
         self.t = config['t'] if 't' in config else 3
         self.sigma = config['sigma'] if 'sigma' in config else 7
         self.kernel_size = config['sigma'] if 'sigma' in config else 21
-        # self.max_depth = self.min_depth + self.elastomer_thickness
 
+        self.wear_mask = np.zeros((640, 480), dtype=np.float64)
+        self.tear_mask = np.zeros((640, 480), dtype=np.float64)
+        # self.max_depth = self.min_depth + self.elastomer_thickness
 
     @staticmethod
     def load_assets(assets_path, input_res, output_res, lf_method, n_light_sources):
@@ -180,7 +182,6 @@ class SimulationModel:
     def generate(self, depth):
         s = depth2cloud(self.cam_matrix, depth)
 
-
         # print(o3d.core.Tensor(self.cam_matrix.intrinsic_matrix).cuda())
         # exit()
 
@@ -204,8 +205,6 @@ class SimulationModel:
         # cv2.waitKey(-1)
         #
         # print('depth', )
-
-
 
         # elastic deformation
         # if self.apply_elastic_deformation:

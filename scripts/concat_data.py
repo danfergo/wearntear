@@ -7,17 +7,17 @@ import numpy as np
 
 
 def gen_frame(base_path, frame_name):
-    frames = [cv2.imread(os.path.join(base_path, s, frame_name)) for s in ['l', 'c', 'r']]
+    frames = [cv2.imread(os.path.join(base_path, s, frame_name)) for s in ['l', 'c']]
     # print(frames)
     concat_frame = np.concatenate(frames, axis=1)
     legend = np.zeros((50, concat_frame.shape[1]), dtype=np.uint8)
 
     legend = cv2.putText(legend, 'Left sensor', (10, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
     legend = cv2.putText(legend, 'Visual camera', (640 + 10, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
-    legend = cv2.putText(legend, 'Right sensor', (1280 + 10, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
+    # legend = cv2.putText(legend, 'Right sensor', (1280 + 10, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
+    legend_rgb = cv2.cvtColor(legend, cv2.COLOR_GRAY2RGB)
 
-    legend_rgb = np.stack([legend, legend, legend], axis=2)
-
+    print(legend_rgb.shape, concat_frame.shape)
     concat_frame = np.concatenate([concat_frame, legend_rgb], axis=0)
     # cv2.imshow('frame', concat_frame)
     # cv2.waitKey(1)
@@ -25,7 +25,7 @@ def gen_frame(base_path, frame_name):
 
 
 def main():
-    data_path = dirname(__file__) + '/../data/wear/rec_00001'
+    data_path = dirname(__file__) + '/../data/tear_knife/rec_00009'
 
     # sensors = [s for s in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, s))]
 

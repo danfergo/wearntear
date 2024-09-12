@@ -102,6 +102,10 @@ class SimulationApproach:
         self.elastomer_thickness = config['elastomer_thickness']
         self.min_depth = config['min_depth']
 
+        self.wear_mask = np.zeros((480, 640), dtype=np.float64)
+        self.tear_mask = np.zeros((480, 640), dtype=np.float64)
+
+
         self.default_ks = 0.15
         self.default_kd = 0.5
         self.default_alpha = 5
@@ -280,7 +284,7 @@ class SimulationApproach:
 
         w3 = np.stack([self.wear_mask for i in range(3)], axis=2)
 
-        self.worn_background = (((w3 * rgb / 255.0) + (1 - w3) * self.background / 255.0) * 255).astype(np.uint8)
+        self.worn_background = (((w3 * (rgb / 255.0)) + (1 - w3) * self.background / 255.0) * 255).astype(np.uint8)
 
         not_in_touch, in_touch = self.segments(obj_depth)
         protrusion_depth = self.protrusion_map(obj_depth, not_in_touch)
@@ -315,7 +319,7 @@ class SimulationApproach:
         # kernel = gkern2(3, 1)
         # out = cv2.filter2D(out, -1, kernel)
 
-        # cv2.imshow('tactile img', out)
+
         # cv2.imwrite('tactile_img.png', out)
         #
 

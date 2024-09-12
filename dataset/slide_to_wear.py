@@ -3,8 +3,6 @@ from world.shared.robot import Robot
 from yarok import Platform, PlatformMJC, PlatformHW, Injector, component, ConfigBlock
 
 from world.world import shared_config
-from math import pi
-
 
 
 
@@ -21,14 +19,15 @@ class SlideToWear:
         self.load_dz = config['load_dz']
         self.load_dy = config['load_dy']
 
-        self.START_POS_UP = [-0.468, -0.556 + self.load_dy * 0.001, -0.005]
-        self.START_POS_DOWN = [-0.468, -0.556 + self.load_dy * 0.001, -0.005 + self.load_dz * 0.001]
-        self.END_POS_DOWN = [-0.448, -0.556 + self.load_dy * 0.001, -0.005 + self.load_dz * 0.001]
-        self.END_POS_UP = [-0.448, -0.556 + self.load_dy * 0.001, -0.005]
+        self.START_POS_UP = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168]
+        self.START_POS_DOWN = [-0.468, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
+        self.END_POS_DOWN = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168 + self.load_dz * 0.001]
+        self.END_POS_UP = [-0.448, -0.556 + self.load_dy * 0.001, -0.0168]
 
     def on_start(self):
         self.robot.memory.prepare()
         self.pl.wait(self.robot.gripper.close())
+        self.pl.wait_seconds(100)
 
         print('-------------')
         print(f'Collecting data for {self.hardness} !!!!')
@@ -77,11 +76,12 @@ def main():
     #         'load_dz': [1, 0, -1, -2],
     #     }, parallel=4)
     # else:
+    # speeds: slow, medium, fast
     run(**{
-        'dataset_name': 'tear_knife',
+        'dataset_name': 'wear',
         'data_path': './data/',
-        'hardness': 'Rough',
-        'speed': 0,
+        'hardness': 'hard',
+        'speed': 1,
         'load_dz': -0.8,
         'load_dy': +2,
         'p_cam': (0, 0),

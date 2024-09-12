@@ -1,3 +1,5 @@
+from datetime import time
+import time
 import cv2
 import numpy as np
 from trimesh import Scene
@@ -55,6 +57,7 @@ def arrow(p, v, color='red', scale=0.25, length=1):
 
 def show_field(cloud_map=None, field=None, field_color=None, mesh=None, pts=None, arrows=None, paths=None,
                subsample=25):
+
     arrows = [] if arrows is None else \
         [arrow(a[0], a[1], color=a[2] if len(a) > 2 else 'black') for a in arrows]
     # print('--> paths', paths)
@@ -65,6 +68,7 @@ def show_field(cloud_map=None, field=None, field_color=None, mesh=None, pts=None
             for j in range(cloud_map.shape[1]):
                 if m[i, j] > 0.5 and (not subsample or (i * cloud_map.shape[1] + j) % subsample == 0):
                     arrows.append(arrow(cloud_map[i, j], field[i, j], color=(field_color or 'black')))
+    print('xxxx')
 
     points = []
     if cloud_map is not None and field is None:
@@ -96,7 +100,7 @@ def show_field(cloud_map=None, field=None, field_color=None, mesh=None, pts=None
     # scene.apply_transform(scene.camera.look_at([[0,0,0]], center=[10, 0, 0]))
     # scene.set_camera(angles=[0, math.pi/2, 0], distance=0.06, center=np.array([-0.01, 0, 0.019]))
     scene.show()
-
+    print('SHOW SCENE')
 
 def plot_depth_lines(depth_clouds, depth, rgb_frame=None, row=None,
                      colors=['red', 'green', 'blue'],
@@ -127,3 +131,4 @@ def plot_depth_lines(depth_clouds, depth, rgb_frame=None, row=None,
         axes[2].imshow(rgb_frame)
 
     plt.show()
+
